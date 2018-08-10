@@ -81,9 +81,7 @@ void fill_buffer(void *audioBuffer,size_t offset, size_t size) {
 			
 			if(buttons[j].ID & kHeld)
 				buttons[j].env.triggerOnTime = currentSample;
-				displacement += oscilator(currentSample, buttons[j].frequency, 1.0, buttons[j].waveForm);// * buttons[j].env.getAmplitude(currentSample);
-
-			/*else if(buttons[j].ID & kUp)
+			else if(buttons[j].ID & kUp)
 				buttons[j].env.triggerOffTime = currentSample;
 			
 			//If button is still making sound
@@ -91,7 +89,7 @@ void fill_buffer(void *audioBuffer,size_t offset, size_t size) {
 			{
 				nKeysPlaying++;
 				displacement += oscilator(currentSample, buttons[j].frequency, 1.0, buttons[j].waveForm) * buttons[j].env.getAmplitude(currentSample);
-			}*/
+			}
 		}
 		displacement /= (nKeysPlaying) ? nKeysPlaying : 0;
 		
