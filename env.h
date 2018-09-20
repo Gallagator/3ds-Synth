@@ -48,21 +48,22 @@ struct envelope
     double attackAmplitude;
     double sustainAmplitude;
 
-	bool noteOn;
+	
+	bool isHeld;
 
     envelope()
     {
-        attackTime = SAMPLERATE * 0.5;
-        decayTime = SAMPLERATE * 0.1;
-        releaseTime = SAMPLERATE * 0.5;
+        attackTime = SAMPLERATE * 1;
+        decayTime = SAMPLERATE * 1;
+        releaseTime = SAMPLERATE * 1;
 
 		triggerOnTime = 0;//the sample number at which it has been pressed
 		triggerOffTime = 0;
 		
-        attackAmplitude = 1.0;
-        sustainAmplitude = 0.8;
+        attackAmplitude = 0.4f;
+        sustainAmplitude = 0.4f;
 		
-		noteOn = 0;
+		isHeld = 0;
 
     }
 
@@ -79,14 +80,14 @@ struct envelope
             //Attack
             if(lifetime <= attackTime)
                 amplitude = ((double)lifetime / (double)attackTime) * attackAmplitude;
-
+			//decay
             else if(lifetime > attackTime && lifetime <= (attackTime + decayTime))
-                amplitude = ((double)(lifetime - attackTime) / (double)(decayTime)) * (attackAmplitude - sustainAmplitude) + attackAmplitude;
-
+			    amplitude = ((double)(lifetime - attackTime) / (double)(decayTime)) * (attackAmplitude - sustainAmplitude) + attackAmplitude;
+		//Sustain
             else
                 amplitude = sustainAmplitude;
 
-        }
+        }//Release
         else
         {
             lifetime = currentSample - triggerOffTime;
@@ -112,10 +113,12 @@ struct button
 	struct envelope env;
 	u32 ID;
 	
+	
 	button()
 	{
 		frequency = 440;
 		waveForm = SINE;
+		
 	}
 	
 };
@@ -139,9 +142,25 @@ void initButtons()
 	buttons[10].ID = KEY_CPAD_LEFT;
 	buttons[11].ID = KEY_CPAD_RIGHT;
 	
-	for(unsigned int i = 0; i < sizeof(buttons) / sizeof(buttons[0]); i++)
-		buttons[i].frequency = 440 * pow(2, (i - 9) / 12);
-	
+	buttons[0].frequency= 100;
+	buttons[1].frequency = 200;
+	buttons[2].frequency = 300;
+	buttons[3].frequency = 400;
+	buttons[4].frequency = 500;
+	buttons[5].frequency = 600;
+	buttons[6].frequency = 700;
+	buttons[7].frequency = 800;
+	buttons[8].frequency = 900;
+	buttons[9].frequency = 1000;
+	buttons[10].frequency = 1100;
+	buttons[11].frequency = 1200;
+
+	buttons[0].waveForm = SQUARE;
+	buttons[1].waveForm = SQUARE;
+	buttons[2].waveForm = SAWTOOTH;
+	buttons[3].waveForm = SAWTOOTH;
+	buttons[4].waveForm = TRIANGLE;
+	buttons[5].waveForm = TRIANGLE;
 
 }
 

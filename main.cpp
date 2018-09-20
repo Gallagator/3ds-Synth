@@ -6,10 +6,16 @@
 #include <3ds.h>
 
 #include "wav.h"
+#include "Queue.h"
+#include "Wave_Display.h"
 
 #define SAMPLERATE 22050
 #define SAMPLESPERBUF (SAMPLERATE / 30)
 #define BYTESPERSAMPLE 4
+
+#define TOPSCREENHEIGHT 240
+#define TOPSCREENWIDTH 400
+#define SCREENPROPORTION 0.1f
 
 
 //----------------------------------------------------------------------------
@@ -17,6 +23,8 @@ int main(int argc, char **argv) {
 //----------------------------------------------------------------------------
 
 	initButtons();
+	Queue sampleBuffer(TOPSCREENWIDTH);
+
 
 //initialises wave buffer
     PrintConsole topScreen;
@@ -30,8 +38,6 @@ int main(int argc, char **argv) {
     consoleInit(GFX_TOP, &topScreen);
 
     consoleSelect(&topScreen);
-
-    printf("libctru streaming audio\n");
 //sets aside memory for the audio buffer to be stored
     u32 *audioBuffer = (u32*)linearAlloc(SAMPLESPERBUF*BYTESPERSAMPLE*2);
 //acts as a toggle flag
@@ -60,41 +66,45 @@ int main(int argc, char **argv) {
 
     size_t stream_offset = 0;//variable to hold how far into the wave has run
 
-    stream_offset += SAMPLESPERBUF;
 
     ndspChnWaveBufAdd(0, &waveBuf[0]);
     ndspChnWaveBufAdd(0, &waveBuf[1]);
 
-    printf("Press up/down to change tone\n");
-
-    while(aptMainLoop()) {
+    while(aptMainLoop()) 
+	{
 
         gfxSwapBuffers();
         gfxFlushBuffers();
         gspWaitForVBlank();
 
-        hidScanInput();
-        u32 kDown = hidKeysDown();
-        u32 kHeld = hidKeysHeld();
+		u8* framebuffer = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+		memset(framebuffer, 0, TOPSCREENHEIGHT * TOPSCREENWIDTH * 3);
+		
+		displayWave(framebuffer, &sampleBuffer);
+
+        /*u32 kHeld = hidKeysHeld();
 
 
-        if (kDown & KEY_START)
+        if (kHeld& KEY_START)
             break; // break in order to return to hbmenu
-
+		*/
 
 //checks if audio buffer has been emptied if it has, it refills it
         if (waveBuf[fillBlock].status == NDSP_WBUF_DONE)
         {
 
-            fill_buffer(waveBuf[fillBlock].data_pcm16, stream_offset, waveBuf[fillBlock].nsamples);
+            fill_buffer(waveBuf[fillBlock].data_pcm16, stream_offset, waveBuf[fillBlock].nsamples, &sampleBuffer);
 
             ndspChnWaveBufAdd(0, &waveBuf[fillBlock]);//adds data to the 3ds wave buffer from our buffer
             stream_offset += waveBuf[fillBlock].nsamples;
 
             fillBlock = !fillBlock;
+			
         }
     }
-
+	
+	
+	
     ndspExit();
 
     linearFree(audioBuffer);
