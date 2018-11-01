@@ -53,15 +53,15 @@ struct envelope
 
     envelope()
     {
-        attackTime = SAMPLERATE * 1;
-        decayTime = SAMPLERATE * 1;
-        releaseTime = SAMPLERATE * 1;
+        attackTime = SAMPLERATE * 0.05;
+        decayTime = SAMPLERATE * 0.05;
+        releaseTime = SAMPLERATE * 0.05;
 
 		triggerOnTime = 0;//the sample number at which it has been pressed
 		triggerOffTime = 0;
 		
-        attackAmplitude = 0.4f;
-        sustainAmplitude = 0.4f;
+        attackAmplitude = 0.8f;
+        sustainAmplitude = 0.6f;
 		
 		isHeld = 0;
 
@@ -82,7 +82,9 @@ struct envelope
                 amplitude = ((double)lifetime / (double)attackTime) * attackAmplitude;
 			//decay
             else if(lifetime > attackTime && lifetime <= (attackTime + decayTime))
-			    amplitude = ((double)(lifetime - attackTime) / (double)(decayTime)) * (attackAmplitude - sustainAmplitude) + attackAmplitude;
+				amplitude = ((double)(lifetime - attackTime) / (double)decayTime) * (double)(sustainAmplitude - attackAmplitude) + (double)attackAmplitude;
+			    
+				//amplitude = ((double)(lifetime - attackTime) / (double)(decayTime)) * (attackAmplitude - sustainAmplitude) + attackAmplitude;
 		//Sustain
             else
                 amplitude = sustainAmplitude;
@@ -108,7 +110,7 @@ struct envelope
 
 struct button
 {
-	u16 frequency;
+	double frequency;
 	byte waveForm;
 	struct envelope env;
 	u32 ID;
@@ -117,7 +119,7 @@ struct button
 	button()
 	{
 		frequency = 440;
-		waveForm = SINE;
+		waveForm = SQUARE;
 		
 	}
 	
@@ -125,7 +127,7 @@ struct button
 
 
 //GLOBAL button variables
-struct button buttons[12];
+struct button buttons[14];
 
 void initButtons()
 {
@@ -141,26 +143,25 @@ void initButtons()
 	buttons[9].ID = KEY_R;
 	buttons[10].ID = KEY_CPAD_LEFT;
 	buttons[11].ID = KEY_CPAD_RIGHT;
+	buttons[12].ID = KEY_CPAD_DOWN;
+	buttons[13].ID = KEY_CPAD_UP;
 	
-	buttons[0].frequency= 100;
-	buttons[1].frequency = 200;
-	buttons[2].frequency = 300;
-	buttons[3].frequency = 400;
-	buttons[4].frequency = 500;
-	buttons[5].frequency = 600;
-	buttons[6].frequency = 700;
-	buttons[7].frequency = 800;
-	buttons[8].frequency = 900;
-	buttons[9].frequency = 1000;
-	buttons[10].frequency = 1100;
-	buttons[11].frequency = 1200;
+	buttons[0].frequency= 440; //A
+	buttons[1].frequency = 466;//A#
+	buttons[2].frequency = 494;//B
+	buttons[3].frequency = 523;//C
+	buttons[4].frequency = 554;//C#
+	buttons[5].frequency = 587;//D
+	buttons[6].frequency = 622;//D#
+	buttons[7].frequency = 659;//E
+	buttons[8].frequency = 698;//F
+	buttons[9].frequency = 740;//F#
+	buttons[10].frequency = 329.63;//G
+	buttons[11].frequency = 830;//G#
+	buttons[12].frequency = 415;//G#
+	buttons[13].frequency = 392;//G
+	
 
-	buttons[0].waveForm = SQUARE;
-	buttons[1].waveForm = SQUARE;
-	buttons[2].waveForm = SAWTOOTH;
-	buttons[3].waveForm = SAWTOOTH;
-	buttons[4].waveForm = TRIANGLE;
-	buttons[5].waveForm = TRIANGLE;
 
 }
 

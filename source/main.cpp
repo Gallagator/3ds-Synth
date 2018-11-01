@@ -5,6 +5,7 @@
 
 #include <3ds.h>
 
+
 #include "wav.h"
 #include "Queue.h"
 #include "Wave_Display.h"
@@ -15,7 +16,7 @@
 
 #define TOPSCREENHEIGHT 240
 #define TOPSCREENWIDTH 400
-#define SCREENPROPORTION 0.1f
+#define SCREENPROPORTION 0.2f
 
 
 //----------------------------------------------------------------------------
@@ -25,19 +26,12 @@ int main(int argc, char **argv) {
 	initButtons();
 	Queue sampleBuffer(TOPSCREENWIDTH);
 
-
 //initialises wave buffer
-    PrintConsole topScreen;
     ndspWaveBuf waveBuf[2];
 //initialises the graphics for the 3ds
     gfxInitDefault();
 
-//initialises screen
 
-    
-    consoleInit(GFX_TOP, &topScreen);
-
-    consoleSelect(&topScreen);
 //sets aside memory for the audio buffer to be stored
     u32 *audioBuffer = (u32*)linearAlloc(SAMPLESPERBUF*BYTESPERSAMPLE*2);
 //acts as a toggle flag
@@ -64,8 +58,7 @@ int main(int argc, char **argv) {
     waveBuf[1].data_vaddr = &audioBuffer[SAMPLESPERBUF];
     waveBuf[1].nsamples = SAMPLESPERBUF;
 
-    size_t stream_offset = 0;//variable to hold how far into the wave has run
-
+    size_t stream_offset = 0; //variable to hold how far into the wave has run 
 
     ndspChnWaveBufAdd(0, &waveBuf[0]);
     ndspChnWaveBufAdd(0, &waveBuf[1]);
@@ -82,22 +75,23 @@ int main(int argc, char **argv) {
 		
 		displayWave(framebuffer, &sampleBuffer);
 
-        /*u32 kHeld = hidKeysHeld();
+        u32 kHeld = hidKeysHeld();
 
 
         if (kHeld& KEY_START)
             break; // break in order to return to hbmenu
-		*/
+		
 
 //checks if audio buffer has been emptied if it has, it refills it
         if (waveBuf[fillBlock].status == NDSP_WBUF_DONE)
         {
-
-            fill_buffer(waveBuf[fillBlock].data_pcm16, stream_offset, waveBuf[fillBlock].nsamples, &sampleBuffer);
+			
+	
+            fill_buffer(waveBuf[fillBlock].data_pcm16, stream_offset, waveBuf[fillBlock].nsamples, &sampleBuffer);	
 
             ndspChnWaveBufAdd(0, &waveBuf[fillBlock]);//adds data to the 3ds wave buffer from our buffer
-            stream_offset += waveBuf[fillBlock].nsamples;
-
+			stream_offset += waveBuf[fillBlock].nsamples;
+			
             fillBlock = !fillBlock;
 			
         }

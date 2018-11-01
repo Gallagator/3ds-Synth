@@ -40,23 +40,23 @@ typedef unsigned char byte;
 #endif //TOPSCREENWIDTH
 
 #ifndef SCREENPROPORTION
-#define SCREENPROPORTION 0.1f
+#define SCREENPROPORTION 0.2f
 #endif
 
-double oscilator(size_t offset, int freq, double amplitude, byte waveForm)
+
+double oscilator(size_t offset, double freq, byte waveForm)
 {
 	switch (waveForm)
 	{
 		case SINE:
-			return amplitude * sin(freq*(2*M_PI)*(offset)/SAMPLERATE);
+			return sin(freq*(2*M_PI)*(offset)/SAMPLERATE);
 		case TRIANGLE:
-			return asin(sin(freq * 2 * M_PI * (offset)/SAMPLERATE)) * amplitude;
+			return asin(sin(freq * 2 * M_PI * (offset)/SAMPLERATE)) * (2.0 / M_PI);
 		case SAWTOOTH:
-			return 2*amplitude * (freq * M_PI * fmod((double)offset/SAMPLERATE, (double)1.0f/freq)) - amplitude/2;
+			return (2.0 / M_PI) * (freq * M_PI * fmod( (double)offset/(double)SAMPLERATE  , 1.0 / freq) - (M_PI / 2.0));
 		case SQUARE:
-			if( sin(freq * (2*M_PI) * (offset)/SAMPLERATE) > 0)
-				return amplitude;
-			return -amplitude * INT16_MAX;
+			return sin(freq * (2*M_PI) * (offset)/SAMPLERATE) > 0 ? 1 : -1;
+				
 	}
 	
 	return 0.0;
@@ -65,7 +65,7 @@ double oscilator(size_t offset, int freq, double amplitude, byte waveForm)
 
 u16 displacementPos(double displacement)
 {
-	return (displacement * TOPSCREENHEIGHT * SCREENPROPORTION +  TOPSCREENHEIGHT);
+	return (displacement * TOPSCREENHEIGHT * SCREENPROPORTION +  0.5 *TOPSCREENHEIGHT);
 }
 
   
@@ -107,7 +107,7 @@ void fill_buffer(void *audioBuffer,size_t offset, size_t size, Queue* sampleBuff
 			if( ( buttons[j].env.triggerOnTime > buttons[j].env.triggerOffTime && buttons[j].env.isHeld)|| ( (buttons[j].env.triggerOffTime + buttons[j].env.releaseTime) > currentSample && !buttons[j].env.isHeld ))
 			{
 				nKeysPlaying++;
-				displacement += oscilator(currentSample, buttons[j].frequency, 1.0, buttons[j].waveForm) * buttons[j].env.getAmplitude(currentSample);
+				displacement += oscilator(currentSample, buttons[j].frequency, buttons[j].waveForm) * buttons[j].env.getAmplitude(currentSample);
 			}
 		}
 		displacement /= (nKeysPlaying) ? nKeysPlaying : 1;

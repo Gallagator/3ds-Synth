@@ -10,19 +10,29 @@
 #endif //TOPSCREENWIDTH
 
 #ifndef SCREENPROPORTION
-#define SCREENPROPORTION 0.1f
+#define SCREENPROPORTION 0.2f
 #endif
 
-void displayWave(u8* framebuffer, Queue* sampleBuffer)
+
+#include "line.h"
+
+
+void displayWave(u8* fb, Queue* sampleBuffer)
 {
-	
-	for(u16 x = 0; x < 400; x++)
+
+	for(u16 x = 0; x < TOPSCREENWIDTH - 1 ; x ++ )
 	{
-		framebuffer[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 0] = 255; 
-		framebuffer[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 1] = 255;	
-		framebuffer[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 2] = 255;
+		drawLine(fb, x, (*sampleBuffer)[x], x + 1, (*sampleBuffer)[x + 1]);
 	}
 
+/*
+	for(u16 x = 0; x < 400; x++)
+	{
+		fb[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 0] = 255; 
+		fb[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 1] = 255;	
+		fb[ 3 * (TOPSCREENHEIGHT *x + (*sampleBuffer)[x] ) + 2] = 255;
+	}
+*/
 }
 
 #endif //WAVE_DISPLAY_H
