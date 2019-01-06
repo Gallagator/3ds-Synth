@@ -1,108 +1,49 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-
-#include <3ds.h>
-
-
+#include "main.h"
 #include "wav.h"
 #include "Queue.h"
 #include "Wave_Display.h"
-
-#define SAMPLERATE 22050
-#define SAMPLESPERBUF (SAMPLERATE / 30)
-#define BYTESPERSAMPLE 4
-
-#define TOPSCREENHEIGHT 240
-#define TOPSCREENWIDTH 400
-#define SCREENPROPORTION 0.2f
+#include "waveThread.h"
+#include "Application.h"
+#include "Input.h"
 
 
 //----------------------------------------------------------------------------
 int main(int argc, char **argv) {
 //----------------------------------------------------------------------------
 
+	gfxInitDefault();
+	
+	struct waveData waveData;	
+
 	initButtons();
-	Queue sampleBuffer(TOPSCREENWIDTH);
+	Application interface;
+	
 
-//initialises wave buffer
-    ndspWaveBuf waveBuf[2];
-//initialises the graphics for the 3ds
-    gfxInitDefault();
-
-
-//sets aside memory for the audio buffer to be stored
-    u32 *audioBuffer = (u32*)linearAlloc(SAMPLESPERBUF*BYTESPERSAMPLE*2);
-//acts as a toggle flag
-    bool fillBlock = false;
-//initialises audio
-    ndspInit();
-
-//initialises speakers to stereo output and sets the sample rate
-    ndspSetOutputMode(NDSP_OUTPUT_STEREO);
-
-    ndspChnSetInterp(0, NDSP_INTERP_LINEAR);
-    ndspChnSetRate(0, SAMPLERATE);
-    ndspChnSetFormat(0, NDSP_FORMAT_STEREO_PCM16);
-
-    float mix[12];
-    memset(mix, 0, sizeof(mix));//sets all elements of the array to zero
-    mix[0] = 1.0;
-    mix[1] = 1.0;
-    ndspChnSetMix(0, mix);
-
-    memset(waveBuf,0,sizeof(waveBuf));//clears waveBuf
-    waveBuf[0].data_vaddr = &audioBuffer[0];
-    waveBuf[0].nsamples = SAMPLESPERBUF;
-    waveBuf[1].data_vaddr = &audioBuffer[SAMPLESPERBUF];
-    waveBuf[1].nsamples = SAMPLESPERBUF;
-
-    size_t stream_offset = 0; //variable to hold how far into the wave has run 
-
-    ndspChnWaveBufAdd(0, &waveBuf[0]);
-    ndspChnWaveBufAdd(0, &waveBuf[1]);
-
-    while(aptMainLoop()) 
+	Input inp;
+	
+    	// Main loop
+	while (aptMainLoop()) 
 	{
-
-        gfxSwapBuffers();
+	    gfxSwapBuffers();
         gfxFlushBuffers();
-        gspWaitForVBlank();
-
-		u8* framebuffer = gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
-		memset(framebuffer, 0, TOPSCREENHEIGHT * TOPSCREENWIDTH * 3);
+        gspWaitForVBlank();	
 		
-		displayWave(framebuffer, &sampleBuffer);
-
-        u32 kHeld = hidKeysHeld();
-
-
-        if (kHeld& KEY_START)
-            break; // break in order to return to hbmenu
 		
-
-//checks if audio buffer has been emptied if it has, it refills it
-        if (waveBuf[fillBlock].status == NDSP_WBUF_DONE)
-        {
-			
 	
-            fill_buffer(waveBuf[fillBlock].data_pcm16, stream_offset, waveBuf[fillBlock].nsamples, &sampleBuffer);	
+		if ( inp.kHeld & KEY_START )
+			break; // break in order to return to hbmenu
+		
+		if(inp.runApp)
+		{
+			interface.runApp(&inp);
+		}
+		else
+			runSynth(&waveData, &inp);	
+	}
 
-            ndspChnWaveBufAdd(0, &waveBuf[fillBlock]);//adds data to the 3ds wave buffer from our buffer
-			stream_offset += waveBuf[fillBlock].nsamples;
-			
-            fillBlock = !fillBlock;
-			
-        }
-    }
-	
-	
-	
-    ndspExit();
-
-    linearFree(audioBuffer);
-
+ 
+	saveButtons();
     gfxExit();
+
     return 0;
 }

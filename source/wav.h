@@ -1,47 +1,15 @@
 #ifndef WAV_H
 #define WAV_H
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
+#include "main.h"
 
-#include <3ds.h>
-
-#ifndef SAMPLERATE
-#define SAMPLERATE 22050
-#endif // SAMPLERATE
-
-#ifndef SAMPLESPERBUF
-#define SAMPLESPERBUF (SAMPLERATE / 30)
-#endif // SAMPLESPERBUF
-
-
-#ifndef BYTESPERSAMPLE
-#define BYTESPERSAMPLE 4
-#endif // BYTESPERSAMPLE
-
+#include "mymaths.h"
 #include "env.h"
 #include "Queue.h"
+#include "Input.h"
 
 typedef unsigned char byte;
 
-#define SINE       0
-#define TRIANGLE   1
-#define SAWTOOTH   2
-#define	SQUARE     3
-
-#ifndef TOPSCREENHEIGHT
-#define TOPSCREENHEIGHT 240
-#endif //TOPSCREENHEIGHT
-
-#ifndef TOPSCREENWIDTH
-#define TOPSCREENWIDTH 400
-#endif //TOPSCREENWIDTH
-
-#ifndef SCREENPROPORTION
-#define SCREENPROPORTION 0.2f
-#endif
 
 
 double oscilator(size_t offset, double freq, byte waveForm)
@@ -49,14 +17,32 @@ double oscilator(size_t offset, double freq, byte waveForm)
 	switch (waveForm)
 	{
 		case SINE:
-			return sin(freq*(2*M_PI)*(offset)/SAMPLERATE);
+			return mysine(freq*(2*M_PI)*(offset)/SAMPLERATE);
 		case TRIANGLE:
-			return asin(sin(freq * 2 * M_PI * (offset)/SAMPLERATE)) * (2.0 / M_PI);
+		{
+			double x = freq * (double)(offset)/(double)SAMPLERATE;//x coordinate
+			x = x - (size_t)x;
+			double hold;
+			if(x <= 0.5)
+				hold = 4.0*x - 1;
+
+			else
+				hold = -4.0f*x + 3;
+			return hold;
+		}		
 		case SAWTOOTH:
-			return (2.0 / M_PI) * (freq * M_PI * fmod( (double)offset/(double)SAMPLERATE  , 1.0 / freq) - (M_PI / 2.0));
+		{
+			double x = freq * (double)(offset)/(double)SAMPLERATE;//x coordinate
+			x = x - (size_t)x;
+			return 2*x - 1;;
+		}			
 		case SQUARE:
-			return sin(freq * (2*M_PI) * (offset)/SAMPLERATE) > 0 ? 1 : -1;
-				
+		{
+			double x = freq * (double)(offset)/(double)SAMPLERATE;
+			return x - (size_t)x > 0.5 ? -1 : 1;
+		}
+		case NOISE:
+			return ((double)rand() / (double)RAND_MAX) * 2 - 1;				
 	}
 	
 	return 0.0;
@@ -65,11 +51,11 @@ double oscilator(size_t offset, double freq, byte waveForm)
 
 u16 displacementPos(double displacement)
 {
-	return (displacement * TOPSCREENHEIGHT * SCREENPROPORTION +  0.5 *TOPSCREENHEIGHT);
+	return (displacement * TOPSCREEN_HEIGHT * SCREENPROPORTION +  0.5 *TOPSCREEN_HEIGHT);
 }
 
   
-void fill_buffer(void *audioBuffer,size_t offset, size_t size, Queue* sampleBuffer) {
+void fill_buffer(Input* inp, void *audioBuffer,size_t offset, size_t size, Queue* sampleBuffer) {
 //----------------------------------------------------------------------------
 	
 	u32 *dest = (u32*)audioBuffer;//allows dest to access audio buffer
@@ -84,30 +70,33 @@ void fill_buffer(void *audioBuffer,size_t offset, size_t size, Queue* sampleBuff
 		s16 sample = 0;
 		double displacement = 0;
 
-		hidScanInput();
-		u32 kHeld = hidKeysHeld();
-		u32 kDown = hidKeysDown();
-		u32 kUp = hidKeysUp();
+		inp->scanInput();
 
 		for(unsigned int j = 0; j < sizeof(buttons) / sizeof(buttons[0]); j++)
 		{
 			
-			//printf("scanning");
-			if(buttons[j].ID & kDown)
+	
+			
+			if(buttons[j].ID & inp->kDown)
 			{
 				buttons[j].env.triggerOnTime = currentSample;
 	
 			}
-			else if(buttons[j].ID & kUp)
+			else if(buttons[j].ID & inp->kUp)
 			{
 				buttons[j].env.triggerOffTime = currentSample;
 			}
 			//If button is still making sound
-			buttons[j].env.isHeld = buttons[j].ID & kHeld;
-			if( ( buttons[j].env.triggerOnTime > buttons[j].env.triggerOffTime && buttons[j].env.isHeld)|| ( (buttons[j].env.triggerOffTime + buttons[j].env.releaseTime) > currentSample && !buttons[j].env.isHeld ))
+			buttons[j].env.isHeld = buttons[j].ID & inp->kHeld;
+			if( ( buttons[j].env.triggerOnTime > buttons[j].env.triggerOffTime && buttons[j].env.isHeld)|| ( (buttons[j].env.triggerOffTime + adsr.releaseTime) > currentSample && !buttons[j].env.isHeld ))
 			{
 				nKeysPlaying++;
-				displacement += oscilator(currentSample, buttons[j].frequency, buttons[j].waveForm) * buttons[j].env.getAmplitude(currentSample);
+				double amplitude = buttons[j].env.getAmplitude(currentSample);
+				for(int wavenum = 0; wavenum < NFREQUENCIES; wavenum++)
+				{				
+					displacement += oscilator(currentSample, buttons[j].waves[wavenum].frequency, buttons[j].waveForm) * amplitude * 
+					buttons[j].waves[wavenum].amplitude;
+				}
 			}
 		}
 		displacement /= (nKeysPlaying) ? nKeysPlaying : 1;

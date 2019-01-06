@@ -1,7 +1,7 @@
 #ifndef LINE_H
 #define LINE_H
 
-#include <3ds.h>
+#include "main.h"
 
 u16 abs(s16 num)
 {

@@ -1,12 +1,12 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <3ds.h>
+#include "main.h"
 
 class Queue
 {
 public:
-    Queue(u16 len);
+    Queue();
     virtual ~Queue();
 
     void enqueue(u16 val);
@@ -20,7 +20,7 @@ public:
 
 private:
     u16 length;
-    u16* buffer;
+    u16 buffer[TOPSCREEN_WIDTH];
     u16 head;
 
 };

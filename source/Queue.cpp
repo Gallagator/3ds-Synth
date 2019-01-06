@@ -1,9 +1,9 @@
 #include "Queue.h"
 
-Queue::Queue(u16 len)
+Queue::Queue()
 {
-    length = len;
-    buffer = new u16[len];
+    length = TOPSCREEN_WIDTH;
+    
     for(u16 i = 0; i < length; i++) buffer[i] = 0;
     head = 0;
 }
@@ -11,7 +11,7 @@ Queue::Queue(u16 len)
 
 Queue::~Queue()
 {
-    delete[] buffer;
+    
 }
 
 void Queue::enqueue(u16 val)
