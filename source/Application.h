@@ -32,7 +32,6 @@
 
 
 #define NUMERIC -1 //NUMERIC means the row has a numeric value rather than a catagorical value
-#define INCPS 100   //increments per second for numeric values of indices
 
 
 struct Row
@@ -311,6 +310,37 @@ void Application::runApp(Input* inp)
 	inp->scanInput();
 
 	
+	if( inp->kHeld & KEY_TOUCH )
+	{
+		touchPosition pos;
+		hidTouchRead(&pos);
+		
+		/*
+		 There are 30 rows and the touch values for the y-coordinate range from 5 - 234
+		 when the screen is touched. This should explain the assignment of 'yRow'
+		234 - 5 = 229
+		229 / 29
+		py * 29 / 229 will give values between 0 and 100
+		*/
+		u16 yRow = ((pos.py - 5) *29 ) / 229 + 1;
+		setpos(1,1);
+		printf("%d", yRow);
+		for(u32 i = 0; i <  sizeof( menu ) / sizeof( menu[0] )  && yRow != menu[row].y; i++)
+		{
+			if( yRow == menu[i].y )
+			{
+				setColour(0);
+				printRow(row);
+				row = i;
+				setColour(WHITE + BACKGROUND);
+				setColour(BLACK + TEXT);
+				printRow(row);
+				break;
+			}
+		}
+	
+	}
+	
 	if(inp->kDown & KEY_UP)
 	{
 		setColour(0);			
@@ -363,30 +393,8 @@ void Application::runApp(Input* inp)
 		printRow(row);
 		commitChange();
 	}
-	/*
-	else if(inp->kHeld & KEY_LEFT && menu[row].maxIndex == NUMERIC && menu[row].index >= 0)
-	{
-		menu[row].index -= ;
-		if(menu[row].index > menu[row].maxIndex && menu[row].maxIndex != NUMERIC )
-			menu[row].index = 0;
-		setColour(0);			
-		printRow(row);
-		setColour(WHITE + BACKGROUND);
-		setColour(BLACK + TEXT);
-		printRow(row);
-		commitChange();
-	}
-	else if(inp->kHeld & KEY_RIGHT && menu[row].maxIndex == NUMERIC && menu[row].index <= 1000)
-	{
-		menu[row].index += ;
-		setColour(0);			
-		printRow(row);
-		setColour(WHITE + BACKGROUND);
-		setColour(BLACK + TEXT);
-		printRow(row);
-		commitChange();
-	}
-	*/
+	
+	
 }	
 
 
